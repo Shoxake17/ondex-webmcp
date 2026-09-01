@@ -1,6 +1,8 @@
 # OnDex — an agent-native storefront (WebMCP)
 
-**Live demo:** _(deployed URL goes here)_
+**Live demo:** https://ondex-webmcp.vercel.app — start at
+[`/agent`](https://ondex-webmcp.vercel.app/agent) to confirm your browser
+exposes WebMCP.
 **Built for:** OpenAI WebMCP Hackathon, 2026
 
 A food-ordering storefront where the browser agent is a **first-class user of
