@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Yorug' mavzuga qulflangan: qorong'i rejim uchun alohida palitra
+   yozilmagan va `dark:` sinflari yo'q, ya'ni telefon sozlamasi
+   sahifani buzib qo'ymasin. */
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: #ffffff;
+  color: #171717;
+  -webkit-font-smoothing: antialiased;
+}

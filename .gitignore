@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+build/
+
+# Muhit fayllari HECH QACHON commit qilinmaydi.
+# Bu loyihada sir umuman yo'q (demo ma'lumot xotirada), lekin qoida
+# baribir turadi: kelajakda biror kalit qo'shilsa u tasodifan
+# ochiq repoga tushmasin.
+.env
+.env.*
+!.env.example
+
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
