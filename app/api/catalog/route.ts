@@ -28,7 +28,14 @@ export async function GET(req: Request) {
 
   if (q) {
     const found = searchDishes(q);
-    logActivity(state, "search_dishes", `"${q}" — ${found.length} ta natija`);
+    // Jurnal matnlari INGLIZCHA. Ular foydalanuvchiga ko'rinadi va
+    // interfeysning qolgan qismi bilan bir tilda bo'lishi kerak —
+    // aralash til tarjima qilinmagan qoldiqqa o'xshaydi.
+    logActivity(
+      state,
+      "search_dishes",
+      `"${q}" — ${found.length} ${found.length === 1 ? "result" : "results"}`,
+    );
     await saveState(state);
     return NextResponse.json({
       dishes: found.map((d) => ({

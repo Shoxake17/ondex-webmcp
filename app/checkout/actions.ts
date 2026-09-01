@@ -29,17 +29,19 @@ export async function placeOrderAsHuman(formData: FormData) {
   const state = await loadState();
   const res = placeOrder(state, method, "human");
   if (!res.ok || !res.order) {
-    logActivity(state, "checkout", `xato: ${res.error}`);
+    logActivity(state, "checkout", res.error ?? "failed", true);
     // `redirect()` istisno tashlaydi, shuning uchun holat undan OLDIN
     // saqlanishi shart — aks holda jurnal yozuvi yo'qolardi.
     await saveState(state);
     redirect(`/checkout?error=${encodeURIComponent(res.error ?? "failed")}`);
   }
 
+  // "confirmed by you" — jurnalda agent bergan buyurtmadan aniq
+  // farqlansin: kim bosgani keyinchalik eng muhim savol bo'ladi.
   logActivity(
     state,
     "checkout",
-    `odam tasdiqladi — ${res.order.number} (${method})`,
+    `confirmed by you — ${res.order.number} (${method})`,
   );
   await saveState(state);
   redirect(`/orders/${res.order.id}`);
