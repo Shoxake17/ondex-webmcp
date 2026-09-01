@@ -38,11 +38,31 @@ export default async function PermissionsPage() {
       ) : (
         <ol className="divide-y divide-neutral-100 rounded-2xl border border-neutral-200">
           {log.slice(0, 15).map((a, i) => (
-            <li key={i} className="flex items-baseline gap-3 px-4 py-2.5">
-              <code className="shrink-0 text-[12px] font-semibold text-brand">
+            <li
+              key={i}
+              className={`flex items-baseline gap-3 px-4 py-2.5 ${
+                a.refused ? "bg-red-50/70" : ""
+              }`}
+            >
+              <code
+                className={`shrink-0 text-[12px] font-semibold ${
+                  a.refused ? "text-red-700" : "text-brand"
+                }`}
+              >
                 {a.tool}
               </code>
-              <span className="min-w-0 flex-1 truncate text-[13px] text-neutral-600">
+              {/* Rad etilgan urinish jurnalning eng muhim yozuvi: agent
+                  nimani xohlaganini va nima to'xtatganini shu ko'rsatadi. */}
+              {a.refused && (
+                <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-red-700">
+                  refused
+                </span>
+              )}
+              <span
+                className={`min-w-0 flex-1 truncate text-[13px] ${
+                  a.refused ? "text-red-800" : "text-neutral-600"
+                }`}
+              >
                 {a.detail}
               </span>
               <time className="shrink-0 text-[11.5px] text-neutral-400">

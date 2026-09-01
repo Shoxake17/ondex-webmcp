@@ -49,7 +49,20 @@ export type State = {
   orders: Order[];
   permissions: Permissions;
   /** Agent bajargan oxirgi amallar — ruxsatlar sahifasi uchun. */
-  activity: Array<{ at: number; tool: string; detail: string }>;
+  activity: Array<{
+    at: number;
+    tool: string;
+    detail: string;
+    /**
+     * Amal RAD ETILGANMI.
+     *
+     * Rad etishlar jurnalning eng qimmatli qismi: ular foydalanuvchiga
+     * agent nima qilmoqchi bo'lganini va nima to'xtatganini ko'rsatadi.
+     * Bajarilgan amallar orasida yo'qolib ketmasligi uchun alohida
+     * belgilanadi.
+     */
+    refused?: boolean;
+  }>;
 };
 
 const COOKIE = "ondex_webmcp_state";
@@ -241,8 +254,18 @@ export function allowed(state: State, cap: Capability): boolean {
 
 // ── Faoliyat jurnali ────────────────────────────────────────────────
 
-export function logActivity(state: State, tool: string, detail: string) {
-  state.activity.unshift({ at: Date.now(), tool, detail: detail.slice(0, 80) });
+export function logActivity(
+  state: State,
+  tool: string,
+  detail: string,
+  refused = false,
+) {
+  state.activity.unshift({
+    at: Date.now(),
+    tool,
+    detail: detail.slice(0, 80),
+    ...(refused ? { refused: true } : {}),
+  });
   if (state.activity.length > MAX_ACTIVITY) state.activity.length = MAX_ACTIVITY;
 }
 

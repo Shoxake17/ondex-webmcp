@@ -45,7 +45,7 @@ export async function POST(req: Request) {
   const state = await loadState();
   const res = placeOrder(state, method, "agent");
   if (!res.ok) {
-    logActivity(state, "place_order", `rad etildi: ${res.error}`);
+    logActivity(state, "place_order", res.error ?? "refused", true);
     await saveState(state);
     // Ruxsat yo'qligi (403) va holat noto'g'riligi (400) farqlanadi:
     // agent birinchisida qayta urinmasligi, ikkinchisida esa avval

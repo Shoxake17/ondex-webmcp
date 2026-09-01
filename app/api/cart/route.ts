@@ -45,6 +45,10 @@ export async function GET() {
 export async function POST(req: Request) {
   const state = await loadState();
   if (!allowed(state, "cart")) {
+    // Rad etish ham JURNALGA yoziladi: foydalanuvchi agent nima
+    // qilmoqchi bo'lganini ko'rishi kerak, faqat nima qilganini emas.
+    logActivity(state, "add_to_cart", "cart changes are turned off", true);
+    await saveState(state);
     return NextResponse.json(
       { error: "cart changes are turned off in permissions" },
       { status: 403 },

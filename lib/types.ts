@@ -15,6 +15,15 @@ export type Dish = {
   priceTiyin: number;
   available: boolean;
   description: string;
+  /**
+   * Qidiruv uchun qo'shimcha so'zlar, IKKI TILDA.
+   *
+   * Taom nomlari o'zbekcha, foydalanuvchi esa istalgan tilda so'raydi
+   * — sudya "spicy" yoki "coffee" deb yozadi, mijoz "achchiq" deydi.
+   * Faqat nom bo'yicha qidirilsa ikkalasi ham hech narsa topmasdi va
+   * demo aynan birinchi qadamda to'xtardi.
+   */
+  keywords: string;
 };
 
 export type CartLine = { dishId: string; qty: number };

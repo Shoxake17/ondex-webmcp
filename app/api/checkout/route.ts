@@ -18,6 +18,8 @@ import { allowed, cartTotal, loadState, logActivity, saveState } from "@/lib/ser
 export async function GET() {
   const state = await loadState();
   if (!allowed(state, "checkout")) {
+    logActivity(state, "open_checkout", "checkout is turned off", true);
+    await saveState(state);
     return NextResponse.json(
       { error: "opening checkout is turned off in permissions" },
       { status: 403 },

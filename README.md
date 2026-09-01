@@ -113,6 +113,21 @@ npm install
 npm run dev      # http://localhost:3000
 ```
 
+To check that the permissions actually hold, against a running server:
+
+```bash
+npm run check                            # http://localhost:3000
+npm run check -- https://your-deploy.app # or anywhere else
+```
+
+Twenty assertions, and they are the ones worth making: every capability
+refusing its own tools, an agent being denied card payment even with every
+permission granted, invented and sold-out dish ids rejected, the total coming
+from the catalog rather than the request, a tampered cookie discarded, and the
+rendered page agreeing with the API. It sets up each case by minting a signed
+cookie, which means the suite passing is itself evidence that the signature is
+being verified.
+
 **No API keys. No database. Nothing to configure.** The catalog is a constant
 (`lib/catalog.ts`), and your session — cart, permissions, orders — lives in a
 signed cookie (`lib/server-state.ts`). Nothing to leak, which is also why this
