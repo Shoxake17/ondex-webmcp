@@ -17,7 +17,10 @@ const csp = [
   `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
-  `connect-src 'self'${isProd ? "" : " ws: wss:"}`,
+  // Ovozli rejim brauzerdan TO'G'RIDAN-TO'G'RI Gemini Live'ga ulanadi
+  // (qisqa muddatli token bilan), shuning uchun aynan shu bitta host
+  // ochiladi — boshqa hech qayerga chiqib bo'lmaydi.
+  `connect-src 'self' wss://generativelanguage.googleapis.com${isProd ? "" : " ws: wss:"}`,
   "font-src 'self' data:",
   "object-src 'none'",
   "frame-ancestors 'none'",
@@ -33,7 +36,10 @@ const nextConfig: NextConfig = {
       { key: "Referrer-Policy", value: "no-referrer" },
       {
         key: "Permissions-Policy",
-        value: "camera=(), microphone=(), payment=(), usb=(), geolocation=()",
+        // Mikrofon FAQAT shu sahifaga ochiq (`self`) — ovozli rejim
+        // uchun shart. Qolgani yopiq.
+        value:
+          "camera=(), microphone=(self), payment=(), usb=(), geolocation=()",
       },
     ];
     if (isProd) {

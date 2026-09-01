@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import "./globals.css";
 import { AgentBarProvider } from "./agent-bar";
+import Shaddiy from "./shaddiy";
 import WebMcpTools from "./webmcp-tools";
 
 export const metadata: Metadata = {
@@ -58,6 +59,11 @@ export default function RootLayout({
           </header>
 
           <main className="mx-auto max-w-3xl px-4 pb-24 pt-5">{children}</main>
+
+          {/* Sahifaning o'z ovozli agenti. WebMCP amallari brauzer
+              agentiga mo'ljallangan; Shaddiy AYNI ro'yxatni oddiy
+              brauzerda ham ishlatadi. */}
+          <Shaddiy />
         </AgentBarProvider>
       </body>
     </html>

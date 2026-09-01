@@ -62,6 +62,27 @@ can pass that changes what something costs.
 
 ---
 
+## Two agents, one set of tools
+
+WebMCP hands the page's tools to *the browser's* agent, which means you need
+the ChatGPT app or a Chrome flag to use them. In any other browser the page
+just sits there.
+
+So this page also carries an agent of its own: **Shaddiy**, the voice assistant
+behind the button in the corner. Press it and talk — "find me some osh", "add
+two to my cart", "order it".
+
+Shaddiy calls **the same nine tools**, read from the same `buildTools()`. It is
+not a second implementation; it is a second consumer. That is the point worth
+making about WebMCP: once a page describes what it can do, the description does
+not care which agent shows up — a third-party agent and the site's own agent
+run the identical set, and hit the identical server-side permission checks.
+
+Voice needs `GEMINI_API_KEY` set on the deployment. The key stays on the server:
+the browser asks `/api/live-token` for a short-lived token (one session, minutes
+long) and connects to the model directly with that. Without the key the button
+reports that voice is not configured and the store works exactly as before.
+
 ## The nine tools
 
 Registered in `app/webmcp-tools.tsx` via `document.modelContext.registerTool`,
