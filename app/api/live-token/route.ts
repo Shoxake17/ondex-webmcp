@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { geminiFunctionDeclarations } from "@/lib/tool-specs";
+
 /**
  * Ovozli rejim uchun QISQA MUDDATLI token.
  *
@@ -31,6 +33,34 @@ const START_WINDOW_MS = 60_000;
 /** Suhbatning eng uzun davomiyligi. */
 const SESSION_MS = 10 * 60_000;
 
+/**
+ * Shaddiy kim va nima qila oladi.
+ *
+ * Ko'rsatma SERVERDA turadi va tokenga kiradi — brauzerdan
+ * o'zgartirib bo'lmaydi. Shunga qaramay bu XAVFSIZLIK CHEGARASI EMAS:
+ * haqiqiy tekshiruv API yo'llarining ichida. Ko'rsatmani butunlay
+ * chetlab o'tgan model ham `place_order` ruxsatisiz buyurtma bera
+ * olmaydi.
+ */
+const PERSONA = `You are Shaddiy, the voice assistant built into this OnDex
+food-ordering page. Shoxrux created you. Never call yourself Gemini, Google or
+an AI language model — your name is Shaddiy.
+
+Reply in whatever language the user speaks to you. Keep answers short: this is
+speech, not an essay. One or two sentences is usually right.
+
+You act on this page through the tools you were given. Rules that matter:
+- Never invent a dish_id or restaurant_id. Search first, then use the id the
+  search returned.
+- Read the tool result before you answer. If a tool says it failed, say so
+  plainly instead of claiming success.
+- Adding to the cart is safe. Placing an order spends the user's money, so
+  never call place_order until the user has clearly agreed out loud.
+- If place_order comes back refused, do not retry it. Explain that the user
+  can either press the button on the checkout page themselves, or turn on
+  "Place orders" on the permissions page. Both are legitimate.
+- You can only place cash orders. Card payment always stays with the user.`;
+
 export async function POST() {
   const key = process.env.GEMINI_API_KEY;
   if (!key) {
@@ -54,11 +84,25 @@ export async function POST() {
           uses: 1,
           newSessionExpireTime: new Date(now + START_WINDOW_MS).toISOString(),
           expireTime: new Date(now + SESSION_MS).toISOString(),
-          // Model va javob turi SERVERDA qulflanadi — mijoz ularni
-          // o'zgartira olmaydi.
-          liveConnectConstraints: {
+          // ┌─ BUTUN SOZLAMA SERVERDA ────────────────────────────────┐
+          // Model, ko'rsatma va amallar ro'yxati tokenning ichiga
+          // kiradi. Ya'ni brauzer ularni o'zgartira olmaydi: sahifaga
+          // begona skript kirsa ham modelga yangi amal qo'sha olmaydi
+          // yoki ko'rsatmani almashtira olmaydi.
+          //
+          // Maydon nomi hujjatdagi `liveConnectConstraints` emas —
+          // API'ning o'z ta'rifida (discovery) u
+          // `bidiGenerateContentSetup` deb ataladi.
+          // └──────────────────────────────────────────────────────────┘
+          bidiGenerateContentSetup: {
             model: `models/${MODEL}`,
-            config: { responseModalities: ["AUDIO"] },
+            generationConfig: { responseModalities: ["AUDIO"] },
+            systemInstruction: { parts: [{ text: PERSONA }] },
+            tools: [{ functionDeclarations: geminiFunctionDeclarations() }],
+            // Ekranda nima aytilgani ko'rinsin — ovoz eng tekshirib
+            // bo'lmaydigan interfeys.
+            inputAudioTranscription: {},
+            outputAudioTranscription: {},
           },
         }),
       },

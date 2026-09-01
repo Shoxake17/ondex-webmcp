@@ -21,11 +21,15 @@ import { buildTools } from "./webmcp-tools";
  * Amallar agentga bog'liq emasligi shundan ko'rinadi.
  * └────────────────────────────────────────────────────────────────────┘
  *
- * ┌─ MODEL — XAVFSIZLIK CHEGARASI EMAS ────────────────────────────────┐
- * Ko'rsatma va amallar ro'yxati brauzerdan yuboriladi, ya'ni ularni
- * o'zgartirish mumkin. Bu ATAYLAB shunday: haqiqiy tekshiruv baribir
- * API yo'lining ichida. Ko'rsatmani butunlay o'chirib tashlagan
- * odam ham `place_order` ruxsatini aylanib o'ta olmaydi.
+ * ┌─ NIMA QAYERDA ─────────────────────────────────────────────────────┐
+ * Ko'rsatma, model va amallar RO'YXATI — serverda, tokenning ichida
+ * qulflangan (`app/api/live-token`). Brauzer ularni o'zgartira
+ * olmaydi.
+ *
+ * Bu yerda faqat amallarni BAJARISH: ular sahifani boshqaradi va
+ * bizning API'mizga murojaat qiladi. Model esa xavfsizlik chegarasi
+ * emas — hatto u butunlay boshqacha ishlaganda ham `place_order`
+ * ruxsatsiz o'tmaydi, chunki tekshiruv API yo'lining ichida.
  * └────────────────────────────────────────────────────────────────────┘
  */
 
@@ -33,25 +37,6 @@ const WS_URL =
   "wss://generativelanguage.googleapis.com/ws/" +
   "google.ai.generativelanguage.v1beta.GenerativeService." +
   "BidiGenerateContentConstrained";
-
-const PERSONA = `You are Shaddiy, the voice assistant built into this OnDex
-food-ordering page. Shoxrux created you. Never call yourself Gemini, Google or
-an AI language model — your name is Shaddiy.
-
-Reply in whatever language the user speaks to you. Keep answers short: this is
-speech, not an essay. One or two sentences is usually right.
-
-You act on this page through the tools you were given. Rules that matter:
-- Never invent a dish_id or restaurant_id. Search first, then use the id the
-  search returned.
-- Read the tool result before you answer. If a tool says it failed, say so
-  plainly instead of claiming success.
-- Adding to the cart is safe. Placing an order spends the user's money, so
-  never call place_order until the user has clearly agreed out loud.
-- If place_order comes back refused, do not retry it. Explain that the user
-  can either press the button on the checkout page themselves, or turn on
-  "Place orders" on the permissions page. Both are legitimate.
-- You can only place cash orders. Card payment always stays with the user.`;
 
 type Status = "idle" | "starting" | "live" | "error";
 
@@ -137,28 +122,11 @@ export default function Shaddiy() {
       });
 
       socket.onopen = () => {
-        socket.send(
-          JSON.stringify({
-            setup: {
-              // Model tokenda qulflangan; bu yerda faqat suhbat sozlamalari.
-              generationConfig: { responseModalities: ["AUDIO"] },
-              systemInstruction: { parts: [{ text: PERSONA }] },
-              tools: [
-                {
-                  functionDeclarations: tools.map((t) => ({
-                    name: t.name,
-                    description: t.description,
-                    ...toGeminiSchema(t.inputSchema),
-                  })),
-                },
-              ],
-              // Ikkalasi ham matn uchun: ekranda nima aytilgani
-              // ko'rinsin. Ovoz — eng tekshirib bo'lmaydigan interfeys.
-              inputAudioTranscription: {},
-              outputAudioTranscription: {},
-            },
-          }),
-        );
+        // Sozlama BO'SH: model, ko'rsatma, amallar ro'yxati va
+        // transkripsiya — hammasi tokenning ichida, serverda
+        // qulflangan. Bu yerda ularni takrorlash mumkin emas ham,
+        // kerak ham emas.
+        socket.send(JSON.stringify({ setup: {} }));
       };
 
       socket.onerror = () => {
@@ -338,30 +306,6 @@ export default function Shaddiy() {
       )}
     </>
   );
-}
-
-/**
- * JSON Schema -> Gemini sxemasi.
- *
- * Gemini tur nomlarini KATTA harfda kutadi ("OBJECT", "STRING").
- * Argumentsiz amallarda `parameters` umuman yuborilmaydi: bo'sh
- * `properties` bilan e'lon ba'zan rad etiladi.
- */
-function toGeminiSchema(schema: Record<string, unknown>) {
-  const props = (schema.properties ?? {}) as Record<string, unknown>;
-  if (Object.keys(props).length === 0) return {};
-  return { parameters: upper(schema) };
-}
-
-function upper(node: unknown): unknown {
-  if (Array.isArray(node)) return node.map(upper);
-  if (typeof node !== "object" || node === null) return node;
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(node as Record<string, unknown>)) {
-    if (k === "type" && typeof v === "string") out[k] = v.toUpperCase();
-    else out[k] = upper(v);
-  }
-  return out;
 }
 
 function MicIcon({ live }: { live: boolean }) {
