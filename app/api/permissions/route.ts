@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 
-import { activity, permissions, setPermission } from "@/lib/server-state";
+import { loadState, saveState, setPermission } from "@/lib/server-state";
 
 export async function GET() {
+  const state = await loadState();
   return NextResponse.json({
-    permissions: await permissions(),
-    activity: await activity(),
+    permissions: state.permissions,
+    activity: state.activity,
   });
 }
 
@@ -35,7 +36,9 @@ export async function PUT(req: Request) {
   } catch {
     return NextResponse.json({ error: "bad request body" }, { status: 400 });
   }
-  const res = await setPermission(String(body.name ?? ""), Boolean(body.enabled));
+  const state = await loadState();
+  const res = setPermission(state, String(body.name ?? ""), Boolean(body.enabled));
   if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
-  return NextResponse.json({ permissions: await permissions() });
+  await saveState(state);
+  return NextResponse.json({ permissions: state.permissions });
 }

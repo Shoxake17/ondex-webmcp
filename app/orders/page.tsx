@@ -1,10 +1,10 @@
 import Link from "next/link";
 
 import { sum } from "@/lib/catalog";
-import { orders } from "@/lib/server-state";
+import { loadState } from "@/lib/server-state";
 
 export default async function OrdersPage() {
-  const list = await orders();
+  const { orders: list } = await loadState();
 
   return (
     <>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { sum } from "@/lib/catalog";
-import { orderById } from "@/lib/server-state";
+import { loadState, orderById } from "@/lib/server-state";
 
 const STEPS = ["placed", "cooking", "on_the_way", "delivered"] as const;
 
@@ -12,7 +12,7 @@ export default async function OrderPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const order = await orderById(id);
+  const order = orderById(await loadState(), id);
   if (!order) notFound();
 
   const stepIndex = STEPS.indexOf(order.status);

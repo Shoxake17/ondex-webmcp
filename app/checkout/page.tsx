@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { sum } from "@/lib/catalog";
-import { cartTotal, permissions } from "@/lib/server-state";
+import { cartTotal, loadState } from "@/lib/server-state";
 import { placeOrderAsHuman } from "./actions";
 
 export default async function CheckoutPage({
@@ -9,11 +9,9 @@ export default async function CheckoutPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  const [cart, perms, sp] = await Promise.all([
-    cartTotal(),
-    permissions(),
-    searchParams,
-  ]);
+  const [state, sp] = await Promise.all([loadState(), searchParams]);
+  const cart = cartTotal(state);
+  const perms = state.permissions;
 
   if (cart.items.length === 0) {
     return (

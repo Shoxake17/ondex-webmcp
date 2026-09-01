@@ -1,34 +1,36 @@
 import { NextResponse } from "next/server";
 
-import { allowed, logActivity, orders, placeOrder } from "@/lib/server-state";
+import {
+  allowed,
+  loadState,
+  logActivity,
+  placeOrder,
+  saveState,
+} from "@/lib/server-state";
 
 export async function GET() {
-  if (!(await allowed("orders"))) {
+  const state = await loadState();
+  if (!allowed(state, "orders")) {
     return NextResponse.json(
       { error: "order history is turned off in permissions" },
       { status: 403 },
     );
   }
-  return NextResponse.json({ orders: await orders() });
+  return NextResponse.json({ orders: state.orders });
 }
 
 /**
  * Buyurtma berish.
  *
  * ┌─ KIM BERAYOTGANI MUHIM ────────────────────────────────────────────┐
- * `placedBy` mijozdan keladi, ya'ni unga ISHONIB bo'lmaydi — agent
- * o'zini "human" deb ko'rsatishi mumkin. Shuning uchun bu maydon
- * himoya emas, faqat jurnal uchun... deb qoldirish XATO bo'lardi.
+ * `placedBy` mijozdan KELMAYDI. Bu yo'lga tushgan har qanday so'rov
+ * `agent` deb belgilanadi — ya'ni standart holat qattiqroq tomonda:
+ * noma'lum manba agent deb qaraladi va `place_order` ruxsatisiz
+ * o'tmaydi.
  *
- * Yechim: sahifadagi tugma `X-Ondex-Actor: human` sarlavhasini
- * QO'YMAYDI, aksincha AGENT amali `agent` deb belgilanadi va
- * belgilanmagan har qanday so'rov ham `agent` deb hisoblanadi.
- * Ya'ni standart holat — qattiqroq tomon: noma'lum manba agent deb
- * qaraladi va `place_order` ruxsatisiz o'tmaydi.
- *
- * "Odam" deb hisoblanish uchun so'rov sahifadagi forma orqali,
- * Server Action bilan kelishi kerak (`app/checkout/actions.ts`) —
- * u umuman shu yo'ldan o'tmaydi.
+ * "Odam" deb hisoblanish uchun so'rov sahifadagi forma orqali, Server
+ * Action bilan kelishi kerak (`app/checkout/actions.ts`) — u umuman
+ * shu yo'ldan o'tmaydi va agent uni chaqira olmaydi.
  * └────────────────────────────────────────────────────────────────────┘
  */
 export async function POST(req: Request) {
@@ -40,9 +42,11 @@ export async function POST(req: Request) {
   }
   const method = body.paymentMethod === "card" ? "card" : "cash";
 
-  const res = await placeOrder(method, "agent");
+  const state = await loadState();
+  const res = placeOrder(state, method, "agent");
   if (!res.ok) {
-    await logActivity("place_order", `rad etildi: ${res.error}`);
+    logActivity(state, "place_order", `rad etildi: ${res.error}`);
+    await saveState(state);
     // Ruxsat yo'qligi (403) va holat noto'g'riligi (400) farqlanadi:
     // agent birinchisida qayta urinmasligi, ikkinchisida esa avval
     // savatni to'ldirishi kerakligini tushunsin.
@@ -51,9 +55,11 @@ export async function POST(req: Request) {
       { status: res.code === "invalid" ? 400 : 403 },
     );
   }
-  await logActivity(
+  logActivity(
+    state,
     "place_order",
     `${res.order?.restaurantName} — ${res.order?.number}`,
   );
+  await saveState(state);
   return NextResponse.json({ order: res.order });
 }

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { permissions } from "@/lib/server-state";
+import { loadState } from "@/lib/server-state";
 import Probe from "./probe";
 
 /**
@@ -16,7 +16,7 @@ import Probe from "./probe";
  * └────────────────────────────────────────────────────────────────────┘
  */
 export default async function AgentPage() {
-  const perms = await permissions();
+  const { permissions: perms } = await loadState();
 
   return (
     <>

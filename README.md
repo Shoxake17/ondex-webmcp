@@ -90,16 +90,40 @@ npm install
 npm run dev      # http://localhost:3000
 ```
 
-**No environment variables. No API keys. No database.** The catalog and the
-session live in memory (`lib/catalog.ts`, `lib/server-state.ts`), keyed by an
-`ondex_webmcp_sid` cookie. Nothing to configure, nothing to leak — which is also
-why this repo can be public.
+**No API keys. No database. Nothing to configure.** The catalog is a constant
+(`lib/catalog.ts`), and your session — cart, permissions, orders — lives in a
+signed cookie (`lib/server-state.ts`). Nothing to leak, which is also why this
+repo can be public.
+
+The cookie is `httpOnly`, so no script on the page — the agent's included — can
+read or alter it, and the server verifies an HMAC on every read, so a tampered
+cookie is discarded rather than trusted. That matters here specifically because
+the cookie carries the permissions: without the signature, "enforced on the
+server" would be a slogan rather than a fact.
+
+Set `SESSION_SECRET` in a real deployment. Without it the app falls back to a
+key committed in this repo, which is fine for a public demo with no accounts
+and no money in it, and means `git clone && npm install && npm run dev` works
+with nothing to set up.
+
+<sup>Earlier revisions kept sessions in a server-side `Map`. That works on one
+long-lived process and fails quietly on serverless, where route handlers and
+page renders are separate functions with separate memory: the API reported a
+full cart while the page rendered an empty one. The cookie removes the shared
+memory assumption entirely.</sup>
 
 ### Trying it with an agent
 
-- **ChatGPT's in-app browser** picks up `document.modelContext` directly.
-- **Chrome 149+**: enable `chrome://flags/#enable-webmcp-testing`, restart,
+- **ChatGPT desktop app** — open the site in its in-app browser, which supports
+  WebMCP by default. Make sure the conversation is in **ChatGPT** mode; Codex
+  does not get the page's tools and will fall back to searching the web.
+- **Chrome 149+** — enable `chrome://flags/#enable-webmcp-testing`, restart,
   then open the site.
+
+**Open `/agent` first.** It says whether this browser exposes
+`document.modelContext`, lists the nine tools it registered, and marks each one
+allowed or blocked. Without it a browser lacking WebMCP just renders an
+ordinary shop and gives no hint that the agent half is missing.
 
 Things worth asking the agent:
 

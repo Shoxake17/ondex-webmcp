@@ -1,4 +1,4 @@
-import { activity, permissions } from "@/lib/server-state";
+import { loadState } from "@/lib/server-state";
 import PermissionToggles from "./toggles";
 
 /**
@@ -15,7 +15,7 @@ import PermissionToggles from "./toggles";
  * └────────────────────────────────────────────────────────────────────┘
  */
 export default async function PermissionsPage() {
-  const [perms, log] = await Promise.all([permissions(), activity()]);
+  const { permissions: perms, activity: log } = await loadState();
 
   return (
     <>

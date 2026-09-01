@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 
-import { logActivity, placeOrder } from "@/lib/server-state";
+import { loadState, logActivity, placeOrder, saveState } from "@/lib/server-state";
 
 /**
  * Odam tugmani bosdi.
@@ -26,15 +26,21 @@ import { logActivity, placeOrder } from "@/lib/server-state";
 export async function placeOrderAsHuman(formData: FormData) {
   const method = formData.get("paymentMethod") === "card" ? "card" : "cash";
 
-  const res = await placeOrder(method, "human");
+  const state = await loadState();
+  const res = placeOrder(state, method, "human");
   if (!res.ok || !res.order) {
-    await logActivity("checkout", `xato: ${res.error}`);
+    logActivity(state, "checkout", `xato: ${res.error}`);
+    // `redirect()` istisno tashlaydi, shuning uchun holat undan OLDIN
+    // saqlanishi shart — aks holda jurnal yozuvi yo'qolardi.
+    await saveState(state);
     redirect(`/checkout?error=${encodeURIComponent(res.error ?? "failed")}`);
   }
 
-  await logActivity(
+  logActivity(
+    state,
     "checkout",
     `odam tasdiqladi — ${res.order.number} (${method})`,
   );
+  await saveState(state);
   redirect(`/orders/${res.order.id}`);
 }

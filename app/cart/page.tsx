@@ -1,10 +1,10 @@
 import Link from "next/link";
 
 import { sum } from "@/lib/catalog";
-import { cartTotal } from "@/lib/server-state";
+import { cartTotal, loadState } from "@/lib/server-state";
 
 export default async function CartPage() {
-  const cart = await cartTotal();
+  const cart = cartTotal(await loadState());
 
   if (cart.items.length === 0) {
     return (

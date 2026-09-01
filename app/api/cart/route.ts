@@ -5,18 +5,32 @@ import {
   allowed,
   cartTotal,
   clearCart,
+  loadState,
   logActivity,
+  saveState,
   setCartQty,
 } from "@/lib/server-state";
 
+/**
+ * ┌─ HOLAT: BIR MARTA O'QIB, BIR MARTA YOZAMIZ ────────────────────────┐
+ * Holat imzolangan cookie'da. `saveState` cookie'ni BUTUNLAY qayta
+ * yozadi, shuning uchun bitta so'rov ichida ikki marta yozish
+ * birinchisini yo'q qilardi (masalan savatga qo'shish, keyin jurnalga
+ * yozish — savat yo'qolardi).
+ *
+ * Shu sabab har bir yo'l: `loadState` -> o'zgartirish -> `saveState`.
+ * └────────────────────────────────────────────────────────────────────┘
+ */
+
 /** Savat holati va summasi. */
 export async function GET() {
-  return NextResponse.json(await cartTotal());
+  return NextResponse.json(cartTotal(await loadState()));
 }
 
 /** Savatga qo'shish. */
 export async function POST(req: Request) {
-  if (!(await allowed("cart"))) {
+  const state = await loadState();
+  if (!allowed(state, "cart")) {
     return NextResponse.json(
       { error: "cart changes are turned off in permissions" },
       { status: 403 },
@@ -38,16 +52,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "dishId is required" }, { status: 400 });
   }
 
-  const res = await addToCart(dishId, qty);
+  const res = addToCart(state, dishId, qty);
   if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
 
-  await logActivity("add_to_cart", `${res.name} x${qty}`);
-  return NextResponse.json({ ...(await cartTotal()), switched: res.switched });
+  logActivity(state, "add_to_cart", `${res.name} x${qty}`);
+  await saveState(state);
+  return NextResponse.json({ ...cartTotal(state), switched: res.switched });
 }
 
 /** Miqdorni o'zgartirish (0 — o'chirish). */
 export async function PUT(req: Request) {
-  if (!(await allowed("cart"))) {
+  const state = await loadState();
+  if (!allowed(state, "cart")) {
     return NextResponse.json(
       { error: "cart changes are turned off in permissions" },
       { status: 403 },
@@ -63,17 +79,20 @@ export async function PUT(req: Request) {
   if (!dishId) {
     return NextResponse.json({ error: "dishId is required" }, { status: 400 });
   }
-  await setCartQty(dishId, Number(body.qty ?? 0) || 0);
-  return NextResponse.json(await cartTotal());
+  setCartQty(state, dishId, Number(body.qty ?? 0) || 0);
+  await saveState(state);
+  return NextResponse.json(cartTotal(state));
 }
 
 export async function DELETE() {
-  if (!(await allowed("cart"))) {
+  const state = await loadState();
+  if (!allowed(state, "cart")) {
     return NextResponse.json(
       { error: "cart changes are turned off in permissions" },
       { status: 403 },
     );
   }
-  await clearCart();
-  return NextResponse.json(await cartTotal());
+  clearCart(state);
+  await saveState(state);
+  return NextResponse.json(cartTotal(state));
 }

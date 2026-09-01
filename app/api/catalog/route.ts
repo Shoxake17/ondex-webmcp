@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { RESTAURANTS, menuOf, restaurantById, searchDishes } from "@/lib/catalog";
-import { allowed, logActivity } from "@/lib/server-state";
+import { allowed, loadState, logActivity, saveState } from "@/lib/server-state";
 
 /**
  * Katalog: restoranlar, menyu, qidiruv.
@@ -14,7 +14,8 @@ import { allowed, logActivity } from "@/lib/server-state";
  * uchun; yagona ishonchli chegara — server.
  */
 export async function GET(req: Request) {
-  if (!(await allowed("browse"))) {
+  const state = await loadState();
+  if (!allowed(state, "browse")) {
     return NextResponse.json(
       { error: "browsing is turned off in permissions" },
       { status: 403 },
@@ -27,7 +28,8 @@ export async function GET(req: Request) {
 
   if (q) {
     const found = searchDishes(q);
-    await logActivity("search_dishes", `"${q}" — ${found.length} ta natija`);
+    logActivity(state, "search_dishes", `"${q}" — ${found.length} ta natija`);
+    await saveState(state);
     return NextResponse.json({
       dishes: found.map((d) => ({
         ...d,
@@ -42,9 +44,12 @@ export async function GET(req: Request) {
     if (!rest) {
       return NextResponse.json({ error: "no such restaurant" }, { status: 404 });
     }
-    await logActivity("open_menu", rest.name);
+    logActivity(state, "open_menu", rest.name);
+    await saveState(state);
     return NextResponse.json({ restaurant: rest, menu: menuOf(restaurantId) });
   }
 
+  // Ro'yxatni ochish jurnalga yozilmaydi: u har sahifa yuklanishida
+  // chaqiriladi va jurnalni haqiqiy amallardan tozalab yuborardi.
   return NextResponse.json({ restaurants: RESTAURANTS });
 }

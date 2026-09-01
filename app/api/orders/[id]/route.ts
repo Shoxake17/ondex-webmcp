@@ -1,19 +1,20 @@
 import { NextResponse } from "next/server";
 
-import { allowed, orderById } from "@/lib/server-state";
+import { allowed, loadState, orderById } from "@/lib/server-state";
 
 export async function GET(
   _req: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
-  if (!(await allowed("orders"))) {
+  const state = await loadState();
+  if (!allowed(state, "orders")) {
     return NextResponse.json(
       { error: "order history is turned off in permissions" },
       { status: 403 },
     );
   }
   const { id } = await ctx.params;
-  const order = await orderById(id);
+  const order = orderById(state, id);
   // Boshqa seansning buyurtmasi ham shu javobni oladi: "yo'q" va
   // "sizniki emas" ni ajratib ko'rsatish begona ID larni tekshirib
   // chiqish imkonini berardi.
