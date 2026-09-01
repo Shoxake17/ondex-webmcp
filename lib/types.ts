@@ -66,3 +66,28 @@ export const DEFAULT_PERMISSIONS: Permissions = {
   place_order: false,
   orders: true,
 };
+
+/**
+ * Qaysi amal qaysi imkoniyatga tegishli.
+ *
+ * ┌─ NEGA ALOHIDA JADVAL ──────────────────────────────────────────────┐
+ * Buni amal ta'rifining ichiga yozish mumkin edi, lekin u obyekt
+ * `registerTool` ga o'zgarishsiz uzatiladi — spetsifikatsiyada yo'q
+ * maydon qo'shish xavfli (qat'iy amalga oshirish uni rad etishi
+ * mumkin). Shuning uchun bog'lanish tashqarida turadi.
+ * └────────────────────────────────────────────────────────────────────┘
+ *
+ * Bu jadval faqat KO'RSATISH uchun (`/agent` sahifasi). Haqiqiy
+ * tekshiruv baribir API yo'lining ichida — u yerda yagona manba.
+ */
+export const TOOL_CAPABILITY: Record<string, Capability> = {
+  search_dishes: "browse",
+  list_restaurants: "browse",
+  open_menu: "browse",
+  add_to_cart: "cart",
+  view_cart: "cart",
+  open_checkout: "checkout",
+  place_order: "place_order",
+  my_orders: "orders",
+  track_order: "orders",
+};

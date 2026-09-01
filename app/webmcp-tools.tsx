@@ -4,8 +4,19 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { api, lines, registerTools, sum } from "@/lib/webmcp";
+import type { ToolDefinition } from "@/lib/webmcp";
 import type { Dish, Order, Restaurant } from "@/lib/types";
 import { useAgentBar } from "./agent-bar";
+
+/** Amal bajarilganda sahifaga ta'sir qiladigan chaqiruvlar. */
+type ToolContext = {
+  /** Tepadagi lentaga yozadi. */
+  say: (message: string) => void;
+  /** Sahifa ma'lumotini qayta o'qiydi. */
+  refresh: () => void;
+  /** Ekranni almashtiradi. */
+  go: (path: string) => void;
+};
 
 type CartView = {
   items: Array<{ dishId: string; name: string; qty: number; priceTiyin: number }>;
@@ -41,12 +52,29 @@ export default function WebMcpTools() {
   const bar = useAgentBar();
 
   useEffect(() => {
-    const say = bar.push;
-    // Sahifa ma'lumotini yangilash — agent o'zgartirgani darhol
-    // ko'rinsin (savatdagi son, buyurtmalar ro'yxati).
-    const refresh = () => router.refresh();
+    return registerTools(
+      buildTools({
+        say: bar.push,
+        // Sahifa ma'lumotini yangilash — agent o'zgartirgani darhol
+        // ko'rinsin (savatdagi son, buyurtmalar ro'yxati).
+        refresh: () => router.refresh(),
+        go: (path) => router.push(path),
+      }),
+    );
+  }, [router, bar.push]);
 
-    return registerTools([
+  return null;
+}
+
+/**
+ * Amallar ro'yxati.
+ *
+ * Alohida funksiya, chunki uni `/agent` diagnostika sahifasi ham
+ * o'qiydi. Ro'yxatni u yerda QAYTA yozganimizda ikkalasi vaqt o'tib
+ * bir-biridan uzoqlashardi va sahifa yo'q amalni bor deb ko'rsatardi.
+ */
+export function buildTools({ say, refresh, go }: ToolContext): ToolDefinition[] {
+  return [
       {
         name: "search_dishes",
         description:
@@ -118,7 +146,7 @@ export default function WebMcpTools() {
           );
           if (!r.ok) return `Could not open the menu: ${r.error}`;
           say(`Opening ${r.data.restaurant.name}`);
-          router.push(`/restaurants/${encodeURIComponent(id)}`);
+          go(`/restaurants/${encodeURIComponent(id)}`);
           return lines(
             `${r.data.restaurant.name} — ${r.data.menu.length} dishes:`,
             ...r.data.menu.map(
@@ -195,7 +223,7 @@ export default function WebMcpTools() {
             return "The cart is empty — add dishes first.";
           }
           say("Opening checkout");
-          router.push("/checkout");
+          go("/checkout");
           return lines(
             `Checkout is open. Total ${sum(r.data.totalTiyin)}.`,
             "Ask the user whether to place the order with cash payment. If they agree, call place_order.",
@@ -227,7 +255,7 @@ export default function WebMcpTools() {
             );
           }
           refresh();
-          router.push(`/orders/${r.data.order.id}`);
+          go(`/orders/${r.data.order.id}`);
           return `Order ${r.data.order.number} placed at ${r.data.order.restaurantName}, total ${sum(
             r.data.order.totalTiyin,
           )}, cash on delivery.`;
@@ -271,14 +299,11 @@ export default function WebMcpTools() {
           );
           if (!r.ok) return `Could not load the order: ${r.error}`;
           say("Opening the order");
-          router.push(`/orders/${encodeURIComponent(id)}`);
+          go(`/orders/${encodeURIComponent(id)}`);
           return `Order ${r.data.order.number}: ${r.data.order.status}, total ${sum(
             r.data.order.totalTiyin,
           )}.`;
         },
       },
-    ]);
-  }, [router, bar.push]);
-
-  return null;
+  ];
 }
