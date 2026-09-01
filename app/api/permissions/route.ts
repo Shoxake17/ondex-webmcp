@@ -1,44 +1,27 @@
 import { NextResponse } from "next/server";
 
-import { loadState, saveState, setPermission } from "@/lib/server-state";
+import { loadState } from "@/lib/server-state";
 
+/**
+ * Ruxsatlarni O'QISH.
+ *
+ * ┌─ BU YERDA `PUT` YO'Q, VA BU ATAYLAB ───────────────────────────────┐
+ * Avval shu faylda ruxsatni o'zgartiradigan `PUT` bor edi. Sinov uni
+ * ochiq teshik sifatida ko'rsatdi: sahifa kontekstidagi istalgan
+ * skript `place_order` ni o'ziga yoqib olardi.
+ *
+ * O'zgartirish endi faqat Server Action orqali — `app/permissions/
+ * actions.ts`. Agent e'lon qilingan amallardangina foydalana oladi,
+ * ya'ni u yo'l unga butunlay yopiq.
+ *
+ * O'qish qolgan: u hech narsani ochib bermaydi (foydalanuvchi
+ * ruxsatlarini o'zi ko'rmoqda) va nosozlikni aniqlashda kerak.
+ * └────────────────────────────────────────────────────────────────────┘
+ */
 export async function GET() {
   const state = await loadState();
   return NextResponse.json({
     permissions: state.permissions,
     activity: state.activity,
   });
-}
-
-/**
- * Ruxsatni yoqish/o'chirish.
- *
- * ┌─ BU YO'L AGENTGA OCHILMAGAN ───────────────────────────────────────┐
- * `app/webmcp-tools.tsx` da bunday amal YO'Q va bu ataylab: agent
- * o'ziga ruxsat bera oladigan bo'lsa, butun ruxsatlar tizimi
- * ma'nosiz bo'lardi.
- *
- * Yo'lning o'zi ochiq qoladi, chunki uni SAHIFADAGI o'chirgich
- * chaqiradi — ya'ni odam. Agent ham texnik jihatdan `fetch` qila
- * oladi (u sahifa kontekstida ishlaydi), lekin buni qilishi uchun
- * unga bunday amal ma'lum bo'lishi kerak edi; WebMCP orqali u
- * e'lon qilinmagan.
- *
- * To'liq himoya uchun keyingi qadam — o'chirgichni Server Action
- * qilish (CSRF token bilan). Demo doirasida bu ortiqcha, lekin
- * README'da cheklov sifatida aytilgan.
- * └────────────────────────────────────────────────────────────────────┘
- */
-export async function PUT(req: Request) {
-  let body: { name?: string; enabled?: boolean };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "bad request body" }, { status: 400 });
-  }
-  const state = await loadState();
-  const res = setPermission(state, String(body.name ?? ""), Boolean(body.enabled));
-  if (!res.ok) return NextResponse.json({ error: res.error }, { status: 400 });
-  await saveState(state);
-  return NextResponse.json({ permissions: state.permissions });
 }

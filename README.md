@@ -161,6 +161,39 @@ stopped.
 
 ---
 
+## Where the boundary actually is
+
+Being precise about this is worth more than sounding airtight.
+
+**The agent is the threat model, and against it the boundary holds.** An agent
+reaches this page through the nine declared tools and nothing else. There is no
+tool that grants permissions, and there is no HTTP route that does either —
+the switches are a Server Action, which a tool surface cannot reach. Every
+capability is re-checked inside the route that does the work, so refusing is
+not a matter of the agent choosing to behave.
+
+That last part was not true until it was tested. An earlier revision left
+`PUT /api/permissions` open, and a probe showed `place_order` going from
+`false` to `true` in one request — the central claim, undone by an endpoint
+nobody had pointed at the threat model. Two capabilities, `view_cart` and
+`checkout`, were also displayed as enforced while nothing on the server checked
+them. All three are fixed; they are mentioned here because the interesting
+thing about a permission system is where it leaks, not where it holds.
+
+**Arbitrary JavaScript injected into the page is a different problem, and this
+demo does not solve it.** Code running in the page runs with the page's
+identity. The session cookie is `httpOnly`, so a script cannot read or rewrite
+it directly, and the signature stops it being forged from outside — but a
+script can still call the same APIs the page calls. A production answer needs
+a boundary the page does not sit inside, such as a confirmation the user gives
+somewhere the page cannot reach.
+
+**The signing key is committed** when `SESSION_SECRET` is unset, so on a
+deployment without it a person can mint their own cookie by hand. They gain
+their own session and nothing else — there are no accounts, no money and no
+data belonging to anyone else — and `git clone && npm run dev` keeps working
+with nothing to configure. Set the variable on any deployment you care about.
+
 ## What is new, and what is not
 
 Per the hackathon rules, plainly:

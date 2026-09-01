@@ -3,8 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { api } from "@/lib/webmcp";
 import { CAPABILITIES, type Capability, type Permissions } from "@/lib/types";
+import { togglePermission } from "./actions";
 
 /**
  * Har bir imkoniyat NIMA ekanini va o'chirilsa NIMA bo'lishini aytadi.
@@ -55,16 +55,15 @@ export default function PermissionToggles({
     setError(null);
 
     start(async () => {
-      const r = await api<{ permissions: Permissions }>("/api/permissions", {
-        method: "PUT",
-        body: JSON.stringify({ name, enabled }),
-      });
+      // Server Action — e'lon qilingan HTTP yo'li yo'q, ya'ni agent
+      // bu chaqiruvni takrorlay olmaydi.
+      const r = await togglePermission(name, enabled);
       if (!r.ok) {
         setPerms((p) => ({ ...p, [name]: previous }));
         setError(r.error);
         return;
       }
-      setPerms(r.data.permissions);
+      setPerms(r.permissions);
       router.refresh();
     });
   };

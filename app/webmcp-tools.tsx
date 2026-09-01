@@ -174,11 +174,9 @@ function executors({ say, refresh, go }: ToolContext): Record<string, Execute> {
     },
 
     open_checkout: async () => {
-      const r = await api<CartView>("/api/cart");
-      if (!r.ok) return `Could not read the cart: ${r.error}`;
-      if (r.data.items.length === 0) {
-        return "The cart is empty — add dishes first.";
-      }
+      // Ruxsat SERVERDA tekshiriladi; ekranni almashtirishdan OLDIN.
+      const r = await api<CartView>("/api/checkout");
+      if (!r.ok) return `Could not open checkout: ${r.error}`;
       say("Opening checkout");
       go("/checkout");
       return lines(

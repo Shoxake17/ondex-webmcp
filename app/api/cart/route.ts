@@ -22,9 +22,23 @@ import {
  * └────────────────────────────────────────────────────────────────────┘
  */
 
-/** Savat holati va summasi. */
+/**
+ * Savat holati va summasi.
+ *
+ * ★ O'QISH ham `cart` ruxsatini talab qiladi. Avval bu yo'l ochiq
+ * edi va natijada `/agent` sahifasi `view_cart` ni "blocked" deb
+ * ko'rsatsa-da, amal ishlayverardi — ya'ni ekran yolg'on gapirardi.
+ * O'chirilgan imkoniyat O'CHIQ bo'lishi kerak, yarim emas.
+ */
 export async function GET() {
-  return NextResponse.json(cartTotal(await loadState()));
+  const state = await loadState();
+  if (!allowed(state, "cart")) {
+    return NextResponse.json(
+      { error: "cart access is turned off in permissions" },
+      { status: 403 },
+    );
+  }
+  return NextResponse.json(cartTotal(state));
 }
 
 /** Savatga qo'shish. */
