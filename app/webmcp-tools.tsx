@@ -159,14 +159,21 @@ export function buildTools({ say, refresh, go }: ToolContext): ToolDefinition[] 
       {
         name: "add_to_cart",
         description:
-          "Add a dish to the cart by dish_id. One order = one restaurant: " +
-          "adding a dish from another restaurant clears the cart first. " +
+          "Add a dish to the cart by dish_id. Pass quantity when the user " +
+          "asks for more than one (\"add two\" means quantity: 2) — it " +
+          "defaults to 1 otherwise. One order = one restaurant: adding a " +
+          "dish from another restaurant clears the cart first. " +
           "This does NOT place an order.",
         inputSchema: {
           type: "object",
           properties: {
             dish_id: { type: "string" },
-            quantity: { type: "integer", minimum: 1, maximum: 20 },
+            quantity: {
+              type: "integer",
+              minimum: 1,
+              maximum: 20,
+              description: "How many to add. Defaults to 1.",
+            },
           },
           required: ["dish_id"],
         },

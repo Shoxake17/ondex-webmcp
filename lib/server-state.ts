@@ -41,7 +41,30 @@ type Session = {
   activity: Array<{ at: number; tool: string; detail: string }>;
 };
 
-const SESSIONS = new Map<string, Session>();
+/**
+ * ┌─ NEGA `globalThis` ─────────────────────────────────────────────────┐
+ * Oddiy `const SESSIONS = new Map()` yetarli KO'RINADI, lekin ishlamaydi.
+ *
+ * Next.js Route Handler'larni (`app/api/...`) va Server Component'larni
+ * ALOHIDA bundle'larga yig'adi. Ikkalasi ham shu modulni import qiladi
+ * va modul IKKI MARTA ishga tushadi — ya'ni ikkita bir-biridan
+ * bexabar `Map` paydo bo'ladi.
+ *
+ * Oqibati jimgina va chalg'ituvchi edi: agent `/api/cart` orqali savatga
+ * qo'shadi, `/api/cart` uni ko'rsatadi, lekin `/cart` SAHIFASI bo'sh
+ * turadi va `/orders/<id>` 404 qaytaradi. API to'g'ri, ekran esa yolg'on.
+ *
+ * `globalThis` da saqlash ikkala bundle'ni bitta nusxaga olib keladi.
+ * (Bu — Next.js'da uzoq yashaydigan obyektlar uchun odatiy usul; xuddi
+ * shu sabab baza ulanishlari ham shunday saqlanadi.)
+ * └────────────────────────────────────────────────────────────────────┘
+ */
+const store = globalThis as unknown as {
+  __ondexWebmcpSessions?: Map<string, Session>;
+};
+const SESSIONS: Map<string, Session> = (store.__ondexWebmcpSessions ??=
+  new Map<string, Session>());
+
 const COOKIE = "ondex_webmcp_sid";
 
 /** Seansda saqlanadigan eng ko'p yozuv — xotira cheksiz o'smasin. */
