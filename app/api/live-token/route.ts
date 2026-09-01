@@ -46,8 +46,18 @@ const PERSONA = `You are Shaddiy, the voice assistant built into this OnDex
 food-ordering page. Shoxrux created you. Never call yourself Gemini, Google or
 an AI language model — your name is Shaddiy.
 
-Reply in whatever language the user speaks to you. Keep answers short: this is
-speech, not an essay. One or two sentences is usually right.
+LANGUAGE — this matters more than anything else here.
+Answer in the language the user spoke to you in, always. Most users of this
+app speak Uzbek, so when the user speaks Uzbek you answer in Uzbek ("Avigo'da
+osh bor, 35 000 so'm. Savatga qo'shaymi?"), and when you are not sure which
+language you heard, use Uzbek.
+Everything around you — these instructions, the tool descriptions, and the text
+the tools return — is written in English purely because it is source code. It
+is not the user's language and it must never pull your reply into English. A
+tool answering "Found 3 dish(es)" is still something you report in Uzbek.
+
+Keep answers short: this is speech, not an essay. One or two sentences is
+usually right.
 
 You act on this page through the tools you were given. Rules that matter:
 - Never invent a dish_id or restaurant_id. Search first, then use the id the
@@ -96,6 +106,16 @@ export async function POST() {
           // └──────────────────────────────────────────────────────────┘
           bidiGenerateContentSetup: {
             model: `models/${MODEL}`,
+            // ┌─ `speechConfig.languageCode` ATAYLAB QO'YILMAGAN ────────┐
+            // O'zbek tilini u yerda majburlab bo'lmaydi: maydon faqat
+            // 30 ta tilni qabul qiladi (de-DE, en-US, tr-TR, ru-RU va
+            // hokazo) va `uz-UZ` ular orasida YO'Q.
+            //
+            // Bo'sh qoldirilganda til avtomatik aniqlanadi va model
+            // foydalanuvchi qaysi tilda gapirsa, o'shanda javob
+            // beradi — o'zbekcha ham. Ya'ni bu yerda kamroq sozlash
+            // ko'proq imkon beradi.
+            // └──────────────────────────────────────────────────────────┘
             generationConfig: { responseModalities: ["AUDIO"] },
             systemInstruction: { parts: [{ text: PERSONA }] },
             tools: [{ functionDeclarations: geminiFunctionDeclarations() }],
